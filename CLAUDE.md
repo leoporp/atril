@@ -36,4 +36,6 @@ Este archivo es el traspaso entre chats: léelo antes de tocar algo.
 
 ## Historia
 
+- El `id` del manifest es `atril-app` (no `./`): el primer intento de instalar en el celular desde un navegador interno (enlace abierto dentro de otra app) dejó a Chrome creyendo que ya estaba instalada. No lo cambies sin motivo: cada cambio hace que Chrome la vea como otra app. Instalar siempre desde la app de Chrome, no desde enlaces dentro de otras apps.
+
 - Antes vivía como página de claude.ai con la base de datos de esa página (vacía al migrar, nov 2026). Se pasó a GitHub Pages + Supabase como Fibra y Trazo para instalarla en la tablet.
