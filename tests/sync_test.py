@@ -57,7 +57,7 @@ with sync_playwright() as p:
     check(REMOTE['data'] is not None, 'la nube recibió el estado inicial')
 
     # tablet: pieza del grupo con pendiente, y arrancar sesión con ella
-    tab.click('text=Agregar pieza >> nth=0'); tab.wait_for_timeout(150); tab.fill('#p-title', 'Skinny Love')
+    tab.click('[data-act=new-piece] >> nth=0'); tab.wait_for_timeout(150); tab.fill('#p-title', 'Skinny Love')
     tab.click('[data-act=p-group][data-v="1"]'); tab.fill('#p-newtodo', 'el puente'); tab.click('[data-act=p-todo-add]')
     tab.fill('#p-pos', '24'); tab.click('[data-act=p-save]'); tab.wait_for_timeout(900)
     check(any(v.get('title') == 'Skinny Love' for v in REMOTE['data']['pieces'].values()), 'la pieza llegó a la nube')
@@ -68,7 +68,7 @@ with sync_playwright() as p:
     cel, cerr = device(390, 844, 'dark')
     login(cel)
     cel.evaluate("location.hash='#hoy'"); cel.wait_for_timeout(200)
-    check('sesión en curso' in cel.inner_text('#view').lower(), 'el celular ve la sesión que corre en la tablet')
+    check('tocando ahora' in cel.inner_text('#view').lower(), 'el celular ve la sesión que corre en la tablet')
     check('Skinny Love' in cel.inner_text('#view'), 'el celular ve la pieza')
     cel.screenshot(path=os.path.join(SHOTS, 'celular-sesion-remota.png'), full_page=True)
 

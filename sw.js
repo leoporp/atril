@@ -1,9 +1,10 @@
 // Service worker de Atril: guarda la app para abrirla sin internet
 // y siempre intenta traer la versión más nueva primero. No toca tus datos.
-const CACHE = "atril-shell-v1";
+const CACHE = "atril-shell-v2";
 const SHELL = ["./", "./index.html", "./config.js", "./vendor/supabase.js", "./manifest.webmanifest", "./icons/icon-192.png", "./icons/icon-512.png",
-  "./fonts/newsreader-latin-400-normal.woff2", "./fonts/newsreader-latin-500-normal.woff2", "./fonts/newsreader-latin-400-italic.woff2",
-  "./fonts/instrument-sans-latin-400-normal.woff2", "./fonts/instrument-sans-latin-500-normal.woff2", "./fonts/instrument-sans-latin-600-normal.woff2"];
+  "./img/grain-light.png", "./img/grain-dark.png",
+  "./fonts/fraunces-latin-600-normal.woff2", "./fonts/nunito-sans-latin-400-normal.woff2", "./fonts/nunito-sans-latin-600-normal.woff2",
+  "./fonts/nunito-sans-latin-700-normal.woff2", "./fonts/caveat-latin-500-normal.woff2", "./fonts/caveat-latin-700-normal.woff2"];
 self.addEventListener("install", e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));
 });
