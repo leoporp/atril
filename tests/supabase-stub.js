@@ -1,4 +1,4 @@
-// Supabase de mentira para las pruebas: la "nube" es /__remote del servidor de pruebas,
+// Supabase de mentira para las pruebas: la "nube" es /__remote del servidor de pruebas (y /__blob/ para los audios),
 // compartida entre los navegadores (tablet y celular). Contraseña correcta: "bien".
 window.supabase = {
   createClient(url, key, opts) {
@@ -20,6 +20,11 @@ window.supabase = {
       select() { return { eq() { return { async maybeSingle() { const r = await fetch('/__remote'); const j = await r.json(); return { data: j ? { data: j } : null, error: null }; } }; } }; },
       async upsert(row) { await fetch('/__remote', { method: 'PUT', body: JSON.stringify(row.data) }); window.__pushes = (window.__pushes || 0) + 1; return { error: null }; }
     });
-    return { auth, from };
+    const storage = { from: () => ({
+      async upload(path, blob, o) { const r = await fetch('/__blob/' + path, { method: 'PUT', body: blob, headers: { 'Content-Type': (o && o.contentType) || 'application/octet-stream' } }); return r.ok ? { data: { path }, error: null } : { data: null, error: { message: 'Bucket not found' } }; },
+      async download(path) { const r = await fetch('/__blob/' + path); return r.ok ? { data: await r.blob(), error: null } : { data: null, error: { message: 'not found' } }; },
+      async remove(paths) { for (const p of paths) await fetch('/__blob/' + p, { method: 'DELETE' }); return { error: null }; }
+    }) };
+    return { auth, from, storage };
   }
 };

@@ -1,8 +1,8 @@
 // Service worker de Atril: guarda la app para abrirla sin internet
 // y siempre intenta traer la versión más nueva primero. No toca tus datos.
-const CACHE = "atril-shell-v2";
-const SHELL = ["./", "./index.html", "./config.js", "./vendor/supabase.js", "./manifest.webmanifest", "./icons/icon-192.png", "./icons/icon-512.png",
-  "./img/grain-light.png", "./img/grain-dark.png",
+const CACHE = "atril-shell-v3";
+const SHELL = ["./", "./index.html", "./atril.css", "./atril.js", "./dibujos.js", "./config.js", "./vendor/supabase.js", "./manifest.webmanifest",
+  "./icons/icon-192.png", "./icons/icon-512.png", "./icons/badge-96.png", "./img/grain-light.png", "./img/grain-dark.png",
   "./fonts/fraunces-latin-600-normal.woff2", "./fonts/nunito-sans-latin-400-normal.woff2", "./fonts/nunito-sans-latin-600-normal.woff2",
   "./fonts/nunito-sans-latin-700-normal.woff2", "./fonts/caveat-latin-500-normal.woff2", "./fonts/caveat-latin-700-normal.woff2"];
 self.addEventListener("install", e => {
@@ -21,4 +21,12 @@ self.addEventListener("fetch", e => {
       .then(res => { if (res.ok) { const copy = res.clone(); caches.open(CACHE).then(c => c.put(req, copy)); } return res; })
       .catch(() => caches.match(req, { ignoreSearch: true }).then(r => r || (req.mode === "navigate" ? caches.match("./index.html") : undefined)))
   );
+});
+// Aviso de "sesión en curso": al tocarlo vuelve a Atril (o la abre si estaba cerrada).
+self.addEventListener("notificationclick", e => {
+  e.notification.close();
+  e.waitUntil(self.clients.matchAll({ type: "window", includeUncontrolled: true }).then(list => {
+    const mine = list.find(c => c.url.startsWith(self.registration.scope));
+    return mine ? mine.focus() : self.clients.openWindow("./");
+  }));
 });

@@ -1,55 +1,76 @@
 """Capturas de todas las pantallas con datos de ejemplo (claro y oscuro, tablet y celular).
-Uso: python3 tests/pantallas.py   -> tests/shots/pantallas/
-"""
-import json, os, threading, functools, datetime
-from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
+Uso: python3 tests/pantallas.py [nombre...]   -> tests/shots/pantallas/"""
+import sys, os, datetime
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from base import *
 from playwright.sync_api import sync_playwright
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT = os.path.join(ROOT, 'tests', 'shots', 'pantallas'); os.makedirs(OUT, exist_ok=True)
-class H(SimpleHTTPRequestHandler):
-    def log_message(self, *a): pass
-srv = ThreadingHTTPServer(('127.0.0.1', 0), functools.partial(H, directory=ROOT))
-threading.Thread(target=srv.serve_forever, daemon=True).start()
-URL = 'http://127.0.0.1:%d/' % srv.server_address[1]
-
+srv, URL = serve()
 today = datetime.date.today(); mon = today - datetime.timedelta(days=today.weekday())
 day = lambda n: (mon + datetime.timedelta(days=n)).isoformat()
-past = [d for d in range(today.weekday())][:3]
-S = {'v': 4, 'pieces': {
-  'p1': {'title': 'Skinny Love', 'group': True, 'state': 'aprendiendo', 'track': 'compas', 'pos': '32', 'todos': [{'id': 't1', 'text': 'el puente', 'done': False}], 'at': 1, 'u': 1},
-  'p2': {'title': 'Nocturno en mi menor', 'group': False, 'state': 'puliendo', 'track': 'tiempo', 'pos': '1:40', 'todos': [], 'at': 1, 'u': 1},
-  'p3': {'title': 'River flows in you', 'group': False, 'state': 'sale', 'track': 'compas', 'pos': '', 'todos': [], 'at': 1, 'u': 1}},
-  'sessions': {}, 'meta': {'courses': {'piano': {'lesson': '12', 'song': 'Clocks'}, 'armonia': {'lesson': '4'}}, 'active': None, 'settings': {'goal': 10},
-  'group': {'next': (today + datetime.timedelta(days=2)).isoformat()}}, 'tomb': {'sessions': {}, 'pieces': {}}, 'mu': {}}
-for i, d in enumerate(past):
-    S['sessions']['s%d' % i] = {'day': day(d), 'minutes': [15, 10, 20][i], 'items': [{'t': 'piece', 'id': 'p1', 'pos': '28'}], 'tags': ['grupo'], 'note': 'el puente se resiste' if i == 0 else '', 'at': i, 'timer': True, 'u': 1}
+ago = lambda n: (today - datetime.timedelta(days=n)).isoformat()
+ms = lambda n: int((datetime.datetime.now() - datetime.timedelta(days=n)).timestamp() * 1000)
+S = {'v': 5, 'pieces': {
+  'p1': {'title': 'Skinny Love', 'kind': 'grupo', 'group': True, 'state': 'aprendiendo', 'track': 'compas', 'pos': '32', 'link': 'https://example.com/partitura', 'video': 'https://example.com/tutorial', 'todos': [{'id': 't1', 'text': 'el puente', 'done': False}], 'at': ms(20), 'u': 1},
+  'p2': {'title': 'Nocturno en mi menor', 'kind': 'mia', 'state': 'puliendo', 'track': 'tiempo', 'pos': '1:40', 'todos': [], 'at': ms(20), 'u': 1},
+  'p3': {'title': 'River flows in you', 'kind': 'mia', 'state': 'sale', 'track': 'compas', 'pos': '', 'todos': [], 'at': ms(60), 'u': 1},
+  'p4': {'title': 'Desafío: blues en 12 compases', 'kind': 'desafio', 'state': 'aprendiendo', 'track': 'tiempo', 'pos': '', 'video': 'https://example.com/desafio', 'todos': [], 'at': ms(3), 'u': 1}},
+  'courses': {'piano': {'name': 'Curso de piano', 'lesson': '12', 'song': 'Clocks', 'link': 'https://example.com/v12', 'u': 1}, 'armonia': {'name': 'Curso de armonía', 'lesson': '4', 'u': 1}},
+  'recs': {'r1': {'t': 'piece', 'ref': 'p2', 'at': ms(40), 'dur': 28, 'mime': 'audio/webm', 'up': True, 'path': 'u1/r1', 'u': 1}, 'r2': {'t': 'piece', 'ref': 'p2', 'at': ms(2), 'dur': 30, 'mime': 'audio/webm', 'up': False, 'u': 1}},
+  'sessions': {}, 'meta': {'active': None, 'settings': {'goal': 10, 'name': 'Leo'}, 'group': {'next': (today + datetime.timedelta(days=2)).isoformat()}}, 'tomb': {}, 'mu': {}}
+n = 0
+for d in range(1, today.day):  # sesiones regadas por el mes
+    if d % 3 == 0 or d % 4 == 1:
+        dd = today.replace(day=d).isoformat(); n += 1
+        S['sessions']['s%d' % n] = {'day': dd, 'minutes': [15, 10, 20, 8, 25][n % 5], 'items': [{'t': 'piece', 'id': ['p1', 'p2', 'p1', 'p4'][n % 4], 'pos': '28'}] if n % 5 else [{'t': 'course', 'id': 'piano', 'pos': '11'}], 'tags': [], 'note': 'el puente se resiste' if n == 2 else '', 'at': n, 'timer': True, 'u': 1}
 
+want = sys.argv[1:]
 with sync_playwright() as p:
     b = p.chromium.launch()
-    def shot(name, w, h, scheme, hash_='#hoy', act=None, full=True):
-        ctx = b.new_context(viewport={'width': w, 'height': h}, color_scheme=scheme)
-        pg = ctx.new_page()
-        pg.add_init_script('localStorage.setItem("atril.v4", %s)' % json.dumps(json.dumps(S)))
-        pg.goto(URL + hash_); pg.wait_for_timeout(500)
-        if act: act(pg); pg.wait_for_timeout(400)
+    def shot(name, w, h, scheme, path='#hoy', act=None, full=True, cover=False, st=S):
+        if want and not any(x in name for x in want): return
+        pg, errs = device(b, URL, w, h, scheme, cover=cover, state=st, path=path)
+        pg.wait_for_timeout(300)
+        if act: act(pg); pg.wait_for_timeout(450)
         pg.screenshot(path=os.path.join(OUT, name + '.png'), full_page=full)
-        ctx.close()
+        if real_errors(errs): print(name, 'ERRORES', errs[:3])
+        pg.context.close()
+    T, C = (1180, 820), (390, 844)
     for sch in ('light', 'dark'):
-        shot('tablet-hoy-' + sch, 1180, 820, sch, full=False)
-        shot('celular-hoy-' + sch, 390, 844, sch)
-    shot('tablet-repertorio-light', 1180, 820, 'light', '#repertorio')
-    shot('celular-grupo-dark', 390, 844, 'dark', '#repertorio', lambda pg: pg.click('[data-act=rep-tab][data-v=grupo]'))
-    shot('tablet-cursos-light', 1180, 820, 'light', '#cursos')
-    shot('celular-semana-light', 390, 844, 'light', '#semana')
-    shot('tablet-sesion-dark', 1180, 820, 'dark', '#hoy', lambda pg: pg.click('.hero [data-act=go]'), full=False)
+        shot('tablet-hoy-' + sch, *T, sch, full=True)
+        shot('celular-hoy-' + sch, *C, sch)
+    def tapa(pg):
+        pg.wait_for_timeout(1200); pg.evaluate("sessionStorage.removeItem('atril.cover'); showCover()")
+    shot('tablet-portada-light', *T, 'light', full=False, act=tapa)
+    def tapa2(pg):
+        tapa(pg); pg.wait_for_timeout(420)
+    shot('tablet-portada-abriendo-light', *T, 'light', full=False, act=tapa2)
+    shot('celular-portada-primera-dark', *C, 'dark', cover=True, full=False, st=dict(S, meta=dict(S['meta'], settings={'goal': 10})))
+    shot('tablet-repertorio-light', *T, 'light', '#repertorio')
+    shot('celular-desafios-dark', *C, 'dark', '#repertorio', lambda pg: pg.click('[data-act=rep-tab][data-v=desafio]'))
+    shot('tablet-cursos-light', *T, 'light', '#cursos')
+    shot('tablet-diario-light', *T, 'light', '#diario')
+    shot('celular-diario-dark', *C, 'dark', '#diario')
+    shot('tablet-sesion-dark', *T, 'dark', '#hoy', lambda pg: pg.click('.hero [data-act=mini]'), full=False)
     def reg(pg):
         pg.click('.hero [data-act=go]'); pg.wait_for_timeout(200); pg.click('[data-act=finish]')
-    shot('celular-registro-light', 390, 844, 'light', '#hoy', reg)
-    shot('celular-pieza-dark', 390, 844, 'dark', '#hoy', lambda pg: pg.click('.row-main >> nth=0'))
+    shot('celular-registro-light', *C, 'light', '#hoy', reg, full=False)
+    shot('celular-pieza-light', *C, 'light', '#hoy', lambda pg: pg.click('.row-main >> nth=0'), full=False)
+    shot('chico-hoy-light', 360, 740, 'light')
+    shot('tablet-vertical-hoy-light', 820, 1180, 'light')
+    def grab(pg):
+        pg.click('.row-main >> nth=0'); pg.wait_for_timeout(200); pg.click('#ov-piece [data-act=rec-open]')
+    shot('celular-grabar-light', *C, 'light', '#hoy', grab, full=False)
+    shot('tablet-compartir-light', *T, 'light', '?title=Clase%2013%3A%20Viva%20la%20vida&text=https%3A%2F%2Fexample.com%2Fcurso%2Fv13', lambda pg: pg.click('[data-act=share-dest][data-id=piano]'), full=False)
+    shot('celular-cuenta-light', *C, 'light', '#hoy', lambda pg: pg.click('#sync-btn'), full=False)
     def party(pg):
-        reg(pg); pg.wait_for_timeout(200); pg.click('[data-act=reg-save]'); pg.wait_for_timeout(500)
-    shot('tablet-celebracion-light', 1180, 820, 'light', '#hoy', party, full=False)
+        reg(pg); pg.wait_for_timeout(200); pg.click('[data-act=reg-save]'); pg.wait_for_timeout(350)
+    shot('tablet-celebracion-light', *T, 'light', '#hoy', party, full=False)
+    SN = dict(S, meta=dict(S['meta'], settings={'goal': 10}))
+    shot('ficha-celular', *C, 'light', full=False, st=SN)
+    shot('ficha-celular-diario', *C, 'light', '#diario', full=False, st=SN)
+    shot('ficha-tablet', *T, 'light', full=False, st=SN)
     b.close()
 srv.shutdown()
 print('capturas en', OUT)

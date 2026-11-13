@@ -1,7 +1,7 @@
 {
   "name": "Atril",
   "short_name": "Atril",
-  "description": "Práctica de piano sin culpa: qué tocar hoy, dónde vas en cada pieza y tu semana.",
+  "description": "Cuaderno de piano sin culpa: qué tocar hoy, dónde vas en cada pieza y curso, y tu mes pintado a crayola.",
   "lang": "es-CO",
   "start_url": "./",
   "scope": "./",
@@ -11,8 +11,55 @@
   "background_color": "#FBF7EF",
   "theme_color": "#FBF7EF",
   "icons": [
-    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
-    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
-    { "src": "icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "share_target": {
+    "action": "./",
+    "method": "GET",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url"
+    }
+  },
+  "screenshots": [
+    {
+      "src": "img/ficha-celular.jpg",
+      "sizes": "390x844",
+      "type": "image/jpeg",
+      "form_factor": "narrow",
+      "label": "Hoy: qué tocar y tu semana"
+    },
+    {
+      "src": "img/ficha-celular-diario.jpg",
+      "sizes": "390x844",
+      "type": "image/jpeg",
+      "form_factor": "narrow",
+      "label": "Diario: tu mes pintado a crayola"
+    },
+    {
+      "src": "img/ficha-tablet.jpg",
+      "sizes": "1180x820",
+      "type": "image/jpeg",
+      "form_factor": "wide",
+      "label": "Atril en la tablet"
+    }
   ]
 }
